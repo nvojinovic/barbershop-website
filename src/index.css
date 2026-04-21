@@ -1,0 +1,451 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── DESIGN TOKENS ─────────────────────────────────── */
+:root {
+  --void:         #030305;
+  --base:         #08080F;
+  --surface:      #0D0D1A;
+  --raised:       #121228;
+  --border:       #17172A;
+  --border-hi:    #22223A;
+
+  --crimson:      #E82035;
+  --crimson-dark: #A01525;
+  --crimson-dim:  rgba(232, 32, 53, 0.10);
+  --crimson-glow: rgba(232, 32, 53, 0.35);
+  --crimson-muted:#1E0810;
+
+  --steel:        #6070A0;
+  --steel-light:  #90A8D0;
+
+  --ink:          #F4F6FF;
+  --frost:        #C8D4F0;
+  --muted:        #3A3A58;
+  --dim:          #22223A;
+
+  /* Safe-area insets (populated automatically by the browser on notched phones) */
+  --safe-top:    env(safe-area-inset-top,    0px);
+  --safe-right:  env(safe-area-inset-right,  0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left,   0px);
+}
+
+/* ── BASE ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  /* Prevent iOS Safari horizontal bounce / overflow */
+  overflow-x: hidden;
+}
+
+/* Only hide cursor on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  html { cursor: none; }
+}
+
+body {
+  background: var(--void);
+  color: var(--ink);
+  font-family: 'Outfit', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  line-height: 1.6;
+  /* Remove blue tap flash on Android */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── SCROLLBAR ──────────────────────────────────────── */
+::-webkit-scrollbar         { width: 4px; }
+::-webkit-scrollbar-track   { background: var(--void); }
+::-webkit-scrollbar-thumb   { background: var(--crimson-dark); border-radius: 2px; }
+
+/* ── SELECTION ──────────────────────────────────────── */
+::selection { background: var(--crimson); color: var(--void); }
+
+/* ──────────────────────────────────────────────────────
+   CURSOR  (use transform3d, not top/left)
+   ────────────────────────────────────────────────────── */
+#cursor-dot {
+  position: fixed;
+  top: 0; left: 0;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--crimson);
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* Start off-screen so it never shows at (0,0) on touch devices */
+  transform: translate3d(-200px, -200px, 0);
+  transition: width 0.15s ease, height 0.15s ease, background 0.2s ease;
+}
+
+#cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 32, 53, 0.45);
+  pointer-events: none;
+  z-index: 9998;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* Start off-screen so it never shows at (0,0) on touch devices */
+  transform: translate3d(-217px, -217px, 0);
+  transition: width 0.22s ease, height 0.22s ease, border-color 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.cursor-hover #cursor-dot  { width: 10px; height: 10px; }
+  body.cursor-hover #cursor-ring { width: 52px; height: 52px; border-color: rgba(232,32,53,0.7); }
+}
+
+/* ── SCROLL PROGRESS ────────────────────────────────── */
+/* Bar is now rendered inside <header> in Navigation.tsx (position:absolute)
+   so it shares the same GPU layer — keeps it visible on iOS during downscroll. */
+
+/* ── REVEAL ANIMATIONS ──────────────────────────────── */
+.reveal,
+.reveal-left,
+.reveal-right {
+  opacity: 0;
+  will-change: opacity, transform;
+}
+.reveal       { transform: translateY(28px); }
+.reveal-left  { transform: translateX(-36px); }
+.reveal-right { transform: translateX(36px); }
+
+.reveal.visible,
+.reveal-left.visible,
+.reveal-right.visible {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity  0.72s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-d1 { transition-delay: 0.08s !important; }
+.reveal-d2 { transition-delay: 0.16s !important; }
+.reveal-d3 { transition-delay: 0.24s !important; }
+.reveal-d4 { transition-delay: 0.32s !important; }
+.reveal-d5 { transition-delay: 0.42s !important; }
+.reveal-d6 { transition-delay: 0.52s !important; }
+
+/* ── HERO TEXT REVEAL ───────────────────────────────── */
+.word-reveal {
+  display: block;
+  overflow: hidden;
+}
+.word-inner {
+  display: block;
+  transform: translateY(110%);
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.word-inner.visible { transform: translateY(0); }
+
+/* ── GLITCH EFFECT ──────────────────────────────────── */
+.glitch { position: relative; }
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.glitch:hover::before {
+  opacity: 0.7;
+  color: #FF4466;
+  clip-path: inset(20% 0 55% 0);
+  animation: g1 0.35s steps(2) forwards;
+}
+.glitch:hover::after {
+  opacity: 0.7;
+  color: #4466FF;
+  clip-path: inset(60% 0 15% 0);
+  animation: g2 0.35s steps(2) forwards;
+}
+@keyframes g1 {
+  0%  { transform: translate(-3px, 0); }
+  50% { transform: translate( 3px, 0); }
+  100%{ transform: translate(0);  opacity: 0; }
+}
+@keyframes g2 {
+  0%  { transform: translate( 3px, 0); }
+  50% { transform: translate(-3px, 0); }
+  100%{ transform: translate(0);  opacity: 0; }
+}
+
+/* ── BUTTONS ────────────────────────────────────────── */
+.btn-crimson {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--crimson);
+  color: var(--void);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 14px 32px;
+  border: none;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  white-space: nowrap;
+  user-select: none;
+  /* Minimum tap target */
+  min-height: 44px;
+}
+.btn-crimson::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.14);
+  transform: translateX(-110%) skewX(-20deg);
+  transition: transform 0.5s ease;
+  pointer-events: none;
+}
+.btn-crimson:hover::after { transform: translateX(110%) skewX(-20deg); }
+.btn-crimson:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(232,32,53,0.45), 0 0 0 1px rgba(232,32,53,0.25);
+}
+.btn-crimson:active { transform: translateY(0); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--frost);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 13px 31px;
+  border: 1px solid var(--border-hi);
+  cursor: pointer;
+  transition: border-color 0.3s ease, color 0.3s ease, background 0.3s ease;
+  white-space: nowrap;
+  user-select: none;
+  min-height: 44px;
+}
+.btn-ghost:hover {
+  border-color: var(--crimson);
+  color: var(--crimson);
+  background: var(--crimson-dim);
+}
+
+/* ── INPUTS ─────────────────────────────────────────── */
+.input-void {
+  background: var(--raised);
+  border: 1px solid var(--border-hi);
+  color: var(--ink);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  padding: 13px 16px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 0;
+}
+.input-void::placeholder { color: var(--muted); }
+.input-void:focus {
+  border-color: var(--crimson);
+  box-shadow: 0 0 0 3px var(--crimson-dim);
+}
+.input-void.error { border-color: rgba(239,68,68,0.6); }
+
+/* Prevent iOS auto-zoom on focus: font-size must be >= 16px */
+@media (max-width: 639px) {
+  .input-void {
+    font-size: 1rem;
+    padding: 15px 16px;
+  }
+}
+
+/* ── LABEL ───────────────────────────────────────────── */
+.label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--crimson);
+}
+
+/* ── NAV LINK ────────────────────────────────────────── */
+.nav-item {
+  position: relative;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(200, 212, 240, 0.80);
+  transition: color 0.25s ease;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: none;
+  /* touch target */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.nav-item::before {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 0;
+  width: 0; height: 1px;
+  background: var(--crimson);
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-item:hover { color: var(--ink); }
+.nav-item:hover::before { width: 100%; }
+
+/* ── 3D TILT CARD ────────────────────────────────────── */
+.tilt-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.12s ease-out, box-shadow 0.3s ease;
+}
+
+/* ── GALLERY CARD ────────────────────────────────────── */
+.gallery-card { overflow: hidden; position: relative; cursor: pointer; }
+.gallery-card img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: grayscale(1);
+  transform: scale(1.02);
+  transition: filter 0.65s ease, transform 0.65s ease;
+}
+.gallery-card:hover img { filter: grayscale(0); transform: scale(1.08); }
+.gallery-card .overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(3,3,5,0.82) 0%, transparent 55%);
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.gallery-card:hover .overlay { opacity: 1; }
+.gallery-card .caption {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 1.25rem;
+  transform: translateY(8px);
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+.gallery-card:hover .caption { transform: translateY(0); opacity: 1; }
+.gallery-card .top-line {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--crimson);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s ease;
+}
+.gallery-card:hover .top-line { transform: scaleX(1); }
+
+/* ── TOUCH DEVICE: always show gallery captions ─────── */
+@media (hover: none) {
+  .gallery-card img    { filter: grayscale(0); }
+  .gallery-card .overlay  { opacity: 1; }
+  .gallery-card .caption  { opacity: 1; transform: translateY(0); }
+  .gallery-card .top-line { transform: scaleX(1); }
+}
+
+/* ── GALLERY: no row-spans on mobile (avoids tall narrow cells) */
+@media (max-width: 1023px) {
+  .gallery-card { grid-row: span 1 !important; }
+}
+
+/* ── FRAME CORNER ────────────────────────────────────── */
+.frame-corner { position: relative; }
+.frame-corner::before,
+.frame-corner::after {
+  content: '';
+  position: absolute;
+  width: 22px; height: 22px;
+  border-color: rgba(232,32,53,0.4);
+  border-style: solid;
+}
+.frame-corner::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+.frame-corner::after  { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+/* ── MODAL ANIMATION ─────────────────────────────────── */
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.modal-panel {
+  animation: modalSlideUp 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ── PULSE RED ───────────────────────────────────────── */
+@keyframes pulseRed {
+  0%, 100% { box-shadow: 0 0 6px rgba(232,32,53,0.4); }
+  50%       { box-shadow: 0 0 24px rgba(232,32,53,0.85), 0 0 48px rgba(232,32,53,0.25); }
+}
+.pulse-red { animation: pulseRed 2s ease-in-out infinite; }
+
+/* ── FOCUS VISIBLE ───────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--crimson);
+  outline-offset: 3px;
+}
+
+/* ──────────────────────────────────────────────────────
+   MOBILE FLOATING BOOKING BUTTON (FAB)
+   ────────────────────────────────────────────────────── */
+.fab-booking {
+  position: fixed;
+  right:  16px;
+  bottom: calc(16px + var(--safe-bottom));
+  z-index: 80;
+  border-radius: 0;
+  padding: 14px 22px;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  box-shadow:
+    0 6px 28px rgba(232,32,53,0.50),
+    0 2px  8px rgba(0,0,0,0.40);
+  /* Pulse ring on load */
+  animation: fabPulse 2.4s ease-in-out 1s 3;
+}
+
+@keyframes fabPulse {
+  0%   { box-shadow: 0 6px 28px rgba(232,32,53,0.50), 0 0 0 0   rgba(232,32,53,0.45); }
+  50%  { box-shadow: 0 6px 28px rgba(232,32,53,0.50), 0 0 0 10px rgba(232,32,53,0); }
+  100% { box-shadow: 0 6px 28px rgba(232,32,53,0.50), 0 0 0 0   rgba(232,32,53,0); }
+}
+
+/* ──────────────────────────────────────────────────────
+   MOBILE NAV STAGGER
+   ────────────────────────────────────────────────────── */
+.mobile-nav-item {
+  opacity: 0;
+  transform: translateX(18px);
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.22,1,0.36,1);
+}
+.mobile-nav-open .mobile-nav-item { opacity: 1; transform: translateX(0); }
+.mobile-nav-item:nth-child(1) { transition-delay: 0.06s; }
+.mobile-nav-item:nth-child(2) { transition-delay: 0.12s; }
+.mobile-nav-item:nth-child(3) { transition-delay: 0.18s; }
+.mobile-nav-item:nth-child(4) { transition-delay: 0.24s; }
+.mobile-nav-item:nth-child(5) { transition-delay: 0.30s; }
