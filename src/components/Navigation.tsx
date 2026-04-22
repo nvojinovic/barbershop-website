@@ -3,10 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 interface Props { onBookingOpen: () => void; }
 
 const LINKS = [
-  { label: 'Über uns', href: '#about' },
+  { label: 'Uber uns', href: '#about' },
   { label: 'Services', href: '#services' },
   { label: 'Team', href: '#team' },
-  { label: 'Galerie', href: '#gallery' },
   { label: 'Kontakt', href: '#contact' },
 ];
 
@@ -139,7 +138,7 @@ export default function Navigation({ onBookingOpen }: Props) {
             className="lg:hidden flex flex-col gap-[5px] z-10 items-center justify-center"
             style={{ width: '44px', height: '44px' }}
             onClick={() => setMobileOpen((v) => !v)}
-            aria-label={mobileOpen ? 'Menü schließen' : 'Menü öffnen'}
+            aria-label={mobileOpen ? 'Menu schliessen' : 'Menu offnen'}
             aria-expanded={mobileOpen}
           >
             {[0, 1, 2].map((i) => (
